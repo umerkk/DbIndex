@@ -24,6 +24,7 @@ public class ParallelIndexer implements Runnable {
 
 	public void run()
 	{
+				
 		while(!dataQueue.isEmpty())
 		{
 		synchronized(hashmap)
@@ -50,6 +51,7 @@ public class ParallelIndexer implements Runnable {
 			
 		}
 		}
+		
 
 
 	}

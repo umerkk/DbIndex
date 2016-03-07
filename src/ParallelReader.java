@@ -60,11 +60,11 @@ public class ParallelReader implements Runnable {
 //********************************************************************************************************
 	
 	//Constructor of the Class
-	public ParallelReader(File file, int byteSize)
+	public ParallelReader(File file)
 	{
 
 		//Initialization of Global Variables.
-		this.byteSize = byteSize;
+
 		this.file = file;
 		myBytes = new byte[byteSize];
 	}
@@ -94,13 +94,13 @@ public class ParallelReader implements Runnable {
 			//Check for the available Main memory i.e. 2MB or 5MB and set he block size accordingly.
 			if((Runtime.getRuntime().freeMemory() / 1024) < 2500)
 			{
-				byteSize = 1048576;
+				byteSize = 4096*100;
 
 			} else if((Runtime.getRuntime().freeMemory() / 1024) > 2500)
 			{
-				byteSize = 1048576;
+				byteSize = 4096*(int)(256*0.1);
 			}
-
+			Filer.GetMemory();
 			//If the size of data file is less then Block Size then Block Size is equal to Data File length
 			//that reads the whole file in one go.
 			if(data.length() < byteSize)
@@ -109,9 +109,9 @@ public class ParallelReader implements Runnable {
 			}
 
 			myBytes = new byte[byteSize]; //Initialize byte array with calculated byteSize
-
+			Filer.GetMemory();
 			//Calculate the loop iterations based on the chunk size.
-			double loopToDo=  (double)data.length()/(double)byteSize;
+			double loopToDo= (double)data.length()/(double)byteSize;
 			
 			//Total number of records in the input file.
 			double numOfRecordsinFile =  (double)data.length()/100;
@@ -167,7 +167,7 @@ public class ParallelReader implements Runnable {
 						recordNum++;
 					}
 				} //FileStreamClose
-
+				Filer.GetMemory();
 
 				//For Safe Reading into byteArray - Calculate the available data to read from this Chunk.
 				//if Available data is less then byteSize then reAllocate the byteArray to available data length.
@@ -177,14 +177,14 @@ public class ParallelReader implements Runnable {
 					
 				}
 				myBytes = new byte[byteSize];
-
+				Filer.GetMemory();
 				//Write the HashMap values to index file and continue the loop for next block.
 				//Necessary to free memory for next block else Memory overflow will occur.
 				Filer.writeIndexes(valueHash);
 							
 			}
 
-
+			Filer.GetMemory();
 			//Get End Time after reading the whole input file and write functions.
 			long endTime2 = System.currentTimeMillis();
 

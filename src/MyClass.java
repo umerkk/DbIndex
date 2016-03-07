@@ -30,15 +30,10 @@ public class MyClass {
 
 		File k = new File("C:\\Users\\Umer-PC\\Desktop\\Concordia\\Advance Database\\Project\\testdata[Actual].txt");
 
-
-		Thread readThread = new Thread(new ParallelReader(k,3000000),"Reader");
-		readThread.start();
-
-
-
-
-
-
+		ParallelReader p = new ParallelReader(k);
+		p.run();
+		//Thread readThread = new Thread(new ParallelReader(k),"Reader");
+		//readThread.start();
 
 	}
 }

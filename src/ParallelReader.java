@@ -90,17 +90,19 @@ public class ParallelReader implements Runnable {
 			int startSeek=0;
 
 			//System.out.println("Length: "+ data.length()+ "|| Array: "+ mulval);
-			Filer.GetMemory();
+			//Filer.GetMemory();
 			//Check for the available Main memory i.e. 2MB or 5MB and set he block size accordingly.
 			if((Runtime.getRuntime().freeMemory() / 1024) < 2500)
 			{
-				byteSize = 4096*100;
+				byteSize = 4096*(int)(245); //For 2MB - 244 Blocks to read
 
 			} else if((Runtime.getRuntime().freeMemory() / 1024) > 2500)
 			{
-				byteSize = 4096*(int)(256*0.1);
+				byteSize = 4096*(int)(854); //For 5MB - 854 Blocks to read
+				//byteSize = 3500000;
+				
 			}
-			Filer.GetMemory();
+			//Filer.GetMemory();
 			//If the size of data file is less then Block Size then Block Size is equal to Data File length
 			//that reads the whole file in one go.
 			if(data.length() < byteSize)
@@ -109,7 +111,7 @@ public class ParallelReader implements Runnable {
 			}
 
 			myBytes = new byte[byteSize]; //Initialize byte array with calculated byteSize
-			Filer.GetMemory();
+			//Filer.GetMemory();
 			//Calculate the loop iterations based on the chunk size.
 			double loopToDo= (double)data.length()/(double)byteSize;
 			
@@ -167,7 +169,7 @@ public class ParallelReader implements Runnable {
 						recordNum++;
 					}
 				} //FileStreamClose
-				Filer.GetMemory();
+				//Filer.GetMemory();
 
 				//For Safe Reading into byteArray - Calculate the available data to read from this Chunk.
 				//if Available data is less then byteSize then reAllocate the byteArray to available data length.
@@ -177,20 +179,23 @@ public class ParallelReader implements Runnable {
 					
 				}
 				myBytes = new byte[byteSize];
-				Filer.GetMemory();
+				//Filer.GetMemory();
 				//Write the HashMap values to index file and continue the loop for next block.
 				//Necessary to free memory for next block else Memory overflow will occur.
 				Filer.writeIndexes(valueHash);
 							
 			}
 
-			Filer.GetMemory();
+			//Filer.GetMemory();
 			//Get End Time after reading the whole input file and write functions.
 			long endTime2 = System.currentTimeMillis();
 
 			//Total time for index creation. EndTime - StartTime. Divide by 1000 to convert into seconds.
 			double indexCreationTime = ((double)(endTime2 - startTime)/(double)1000);
+			
+			System.out.println("Total # of Disk I/O to create the index file are: " + Filer.fileWriteIO);
 
+			
 			System.out.println("Time elapsed to create index files: " + indexCreationTime + " seconds");
 
 			System.out.println("************************************");
@@ -198,18 +203,48 @@ public class ParallelReader implements Runnable {
 			System.out.println("************************************");
 
 			System.out.println("");
-			System.out.print("Please enter the age to fetch record: ");
+			System.out.println("Please choose the option below: ");
+			System.out.println("1 - To Fetch record of an specific age. ");
+			System.out.println("2 - To fetch total number of records of the specific age.");
+			System.out.println("");
+
+			System.out.println("Type your input:_");
 			
 			//Get User input to fetch records.
 			BufferedReader input = new BufferedReader(new InputStreamReader(System.in));
-			int inputAge = Integer.parseInt(input.readLine());
+			int inputOption = Integer.parseInt(input.readLine());
+			if(inputOption == 1)
+			{
+				System.out.println("Please enter the age: ");
+				BufferedReader inputAge = new BufferedReader(new InputStreamReader(System.in));
+				int inputAgee = Integer.parseInt(inputAge.readLine());
 
-			System.out.println("************************************");
-			System.out.println("       Results:");
-			System.out.println("************************************");
+				System.out.println("************************************");
+				System.out.println("       Results:");
+				System.out.println("************************************");
+				
+				Filer.readIndexes(inputAgee, readByte, file);
+
+			} else if (inputOption ==2)
+			{
+				System.out.println("Please enter the age: ");
+				BufferedReader inputAge = new BufferedReader(new InputStreamReader(System.in));
+				int inputAgee = Integer.parseInt(inputAge.readLine());
+				long ouput = Filer.readIndexes(inputAgee,readByte);
+				System.out.println("************************************");
+				System.out.println("       Results:");
+				System.out.println("************************************");
+				System.out.println("Total number of records for the age "+inputAgee+" are: "+ouput);
+
+				
+			} else {
+				System.out.print("Invalid option selected - Program is exiting now! ");
+			}
+
+			
 
 			//Read from the index file based on the provided age.
-			Filer.readIndexes(inputAge, readByte, file);
+			
 			
 			endTime2 = System.currentTimeMillis();
 			double fetchTime = ((double)(endTime2 - startTime)/(double)1000);

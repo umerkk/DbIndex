@@ -59,15 +59,17 @@ public class Filer {
 	
 	//Method to Write Indexes from HashMap to the index Files.
 	//This method create or append pointers of each key(age) in a seperate file.
+	public static int fileWriteIO = 0;
 	public static void writeIndexes(HashMap valueHash)
 	{
-
+		
 		try { 
 			//Loop through the predefined age (given from the project description)
 			for(int k=18;k<=99;k++)
 			{
 				//Check for the specified key (from loop) in the HashMap and proceed with File Write method. 
-				if(valueHash.containsKey(k)){
+				if(valueHash.containsKey(k))
+				{
 					File f = new File("C:\\Users\\Umer-PC\\Desktop\\Concordia\\Advance Database\\Project\\Indexes\\"+k+".index");
 					
 					//If index files does not exists, then create it.
@@ -85,6 +87,7 @@ public class Filer {
 					
 					//Write to File starting from 0 index of byte array to the length of byte array (FULL WRITE)
 					outputStream.write(ss, 0, ss.length);
+					fileWriteIO++;
 					
 					//Flush the OutputStream and write any remaining to the file before we close the stream. 
 					outputStream.flush();
@@ -92,17 +95,97 @@ public class Filer {
 					//Close the Stream and release any resources to free up memory - Write operation is completed. 
 					outputStream.close();
 				}
+				
 			}
+			
+			
 		} catch (Exception e)
 		{
 			System.out.println(e.getMessage());
 		}
+		
 	}
 
 //********************************************************************************************************
+
+	public static int fileAgeRead=0;
+	public static int readIndexes(int age,int bbyteSize)
+	{
+		int byteSize = bbyteSize;
+		byte[] myBytes = new byte[byteSize];
+		int startSeek=0;
+		int totalRecords=0;
+		int fileIO=0;
+		try { 
+			//Create instance of FILE of the specific age.
+			File f = new File("C:\\Users\\Umer-PC\\Desktop\\Concordia\\Advance Database\\Project\\Indexes\\"+age+".index");
+			
+			//If the file does not exists, then there are no records of that specific age.
+			//Display the message to the user.
+			if(!f.exists())
+			{
+				System.out.println("No Such records exists of age "+age+" in the database.");
+				return 0;
+			}
+			
+			RandomAccessFile data = new RandomAccessFile(f, "r"); 
+			
+			//If Index file length is less than block size, read the whole file in one go.
+			if(data.length() < byteSize)
+			{
+				//Assign the block size and initialize the byte array with specific block size.
+				byteSize = (int) f.length();
+				myBytes = new byte[byteSize];
+			}
+
+			//Calculate the loop iterations based on the chunk size.
+			double loopToDo=  (double)data.length()/(double)byteSize;
+			
+			
+			if(loopToDo<1)
+			{	loopV = 1; }
+			else {
+				//Ceil the loop i.e. If loopV is 3.5 then make it run 4 times.
+				loopV = (int) Math.ceil(loopToDo);
+			}
+			
+			
+			//loop through all records of fetched chunk.
+			//iterate through the index file based on the block size till the file is completely read.
+			for (long i = 1; i<=loopV; i++) 
+			{
+				//Calculate available data that is available to be read from the fetched chunk.
+				long availableDataToRead = data.length()-(i*byteSize);
+				
+				//Read the pointers from index file and copy it in bytes array
+				data.read(myBytes);
+				fileAgeRead++;
+				
+				//Move the file read pointer to next value and increment the variables accordingly.
+				//only applicable if file size is greater than block size.
+				data.seek(startSeek+byteSize);
+				startSeek+=byteSize;
+				
+				//Cast the fetched block to string using UTF-8 text encoding and split it by comma.
+				//Each pointer in the index file is separated by comma hence using Split function,
+				//We are getting the length (count) of the records and adding it in our array.
+				totalRecords+= (new String(myBytes,"UTF-8")).split(",").length;
+				
+			}
+			System.out.println("Total # of Disk I/O to fetch the records are: "+fileAgeRead);
+
+			return totalRecords;
+
+		} catch (Exception es)
+		{
+			System.out.println(es.getMessage());
+			return 0;
+		}
+	}
 	
 	//Method to read the pointers from the index file of the given age.
 	//and then read the data file using the pointers and display the persons data. 
+	public static int fileDataIO=0;
 	public static void readIndexes(int age,int bbyteSize,File ddataFile)
 	{
 		//Initialization of variables
@@ -164,6 +247,7 @@ public class Filer {
 				
 				//Read the pointers from index file and copy it in bytes array
 				data.read(myBytes);
+				fileDataIO++;
 				
 				//Move the file read pointer to next value and increment the variables accordingly.
 				//only applicable if file size is greater than block size.
@@ -210,6 +294,8 @@ public class Filer {
 			}
 			//Print the total number of records of the given age.
 			System.out.println("Total # of records: "+recordNum);
+			System.out.println("Total # of Disk I/O to fetch the records are: "+fileDataIO);
+
 		} catch (Exception e)
 		{
 			System.out.println(e.getMessage());
